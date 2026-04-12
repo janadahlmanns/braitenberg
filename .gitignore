@@ -1,0 +1,8 @@
+# Ignore everything
+*
+!.gitignore
+!code/
+
+# But allow files inside code/
+!code/**
+
