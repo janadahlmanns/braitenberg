@@ -197,7 +197,7 @@ def create_wheel_box(x, y, z, tilt, width, height, line_offset_percent=0.05, con
     
     line_stroke_color = "#3A3A3A"  # Darkest gray from CLprompts.txt
     line_stroke_width = 2
-    line_spacing = 0.1
+    line_spacing = 0.05
     line_offset_start = line_offset_percent * height
     
     connector_length = 0.2
@@ -560,7 +560,7 @@ def create_vehicle(x, y, z, tilt, line_offset):
     body = create_body(x=x, y=y, z=z, width=body_width, height=body_height, tilt=tilt)
     
     # Fixed wheel dimensions
-    wheel_width = 0.2
+    wheel_width = 0.3
     wheel_height = 1
     
     # Calculate and create wheel
@@ -656,10 +656,21 @@ class BraitenbergV1(MovingCameraScene):
 # region --- Vehicle ---        
 
         # Draw vehicle at specified position with wheel line offset
-        vehicle = create_vehicle(x=5.25, y=1, z=0, tilt=0.0, line_offset=0.1)
+        vehicle = create_vehicle(x=5.25, y=1, z=0, tilt=0.0, line_offset=0.06)
         self.add(vehicle)
 
 # endregion --- Vehicle ---        
-        
+
+# region --- DRIVE ---
+
+        distance = 2
+        duration = 3
+        for f in range(60):
+                self.remove(vehicle)
+                vehicle = create_vehicle(x=5.25, y=1 + (distance / 120) * f, z=0, tilt=0.0, line_offset=(0.06 + (f*0.01)))
+                self.add(vehicle)
+                self.wait(duration/120)
+
+# endregion --- DRIVE ---        
         
         self.wait(3)
