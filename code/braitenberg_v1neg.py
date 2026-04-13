@@ -666,7 +666,7 @@ class BraitenbergV1neg(MovingCameraScene):
         deceleration_factor = 0.5  # Tuneable parameter: values < 1.0 give deceleration, higher = less deceleration
         
         # Use only the smoother part of the deceleration curve to reduce initial jerkiness
-        t_min = 0.1  # Start partway through the curve (smoother region)
+        t_min = 0.15  # Start partway through the curve (smoother region)
         t_max = 1.0
         
         for f in range(60):
