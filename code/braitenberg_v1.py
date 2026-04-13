@@ -540,6 +540,58 @@ def create_sensor(x, y, z, radius, body_tilt, sensor_anchor_x, sensor_anchor_y, 
     return VGroup(sensor_dot, line_to_anchor, connector_line), connector_end
 
 
+def create_vehicle(x, y, z, tilt, line_offset):
+    """
+    Create a complete Braitenberg vehicle with body, wheel, sensor, and connecting wire.
+    
+    Parameters:
+    - x, y, z: position of the vehicle body
+    - tilt: rotation angle of the body
+    - line_offset: offset percentage for the wheel line (0.0 to 1.0)
+    
+    Returns:
+    - Tuple of (body, wheel1, sensor1, wire1) - all VMobjects to be added to scene
+    """
+    # Fixed body dimensions
+    body_width = 1.5
+    body_height = 2.5
+    
+    # Create body
+    body = create_body(x=x, y=y, z=z, width=body_width, height=body_height, tilt=tilt)
+    
+    # Fixed wheel dimensions
+    wheel_width = 0.2
+    wheel_height = 1
+    
+    # Calculate and create wheel
+    wheel_x, wheel_y, wheel_z, wheel_tilt, connector_direction = calculate_wheel_center_position(
+        x, y, z, body_width, body_height, tilt, wheel_width, wheel_height
+    )
+    wheel1, wheel1_connector_end = create_wheel_box(
+        x=wheel_x, y=wheel_y, z=wheel_z, tilt=wheel_tilt, 
+        width=wheel_width, height=wheel_height, 
+        line_offset_percent=line_offset, connector_direction=connector_direction
+    )
+    
+    # Fixed sensor radius
+    sensor_radius = 0.1
+    
+    # Calculate and create sensor
+    sensor_x, sensor_y, sensor_z, sensor_anchor_x, sensor_anchor_y, sensor_anchor_z = calculate_sensor_center_position(
+        x, y, z, body_width, body_height, tilt, sensor_radius
+    )
+    sensor1, sensor1_connector_end = create_sensor(
+        x=sensor_x, y=sensor_y, z=sensor_z, radius=sensor_radius, 
+        body_tilt=tilt, sensor_anchor_x=sensor_anchor_x, 
+        sensor_anchor_y=sensor_anchor_y, sensor_anchor_z=sensor_anchor_z
+    )
+    
+    # Create connecting wire
+    wire1 = Line(start=wheel1_connector_end, end=sensor1_connector_end, stroke_color=BLACK, stroke_width=4)
+    
+    # Return as a single group
+    vehicle = VGroup(body, wheel1, sensor1, wire1)
+    return vehicle
 
 
 class BraitenbergV1(MovingCameraScene):
@@ -603,37 +655,9 @@ class BraitenbergV1(MovingCameraScene):
             
 # region --- Vehicle ---        
 
-        # --- BODY ---
-        body_x, body_y, body_z = 5.25, 1, 0
-        body_width = 1.5
-        body_height = 2.5
-        body_tilt = 0.0
-        
-        body = create_body(x=body_x, y=body_y, z=body_z, width=body_width, height=body_height, tilt=body_tilt)
-        self.add(body)
-        
-        # --- WHEEL ---
-        # Wheel dimensions
-        wheel_width = 0.2
-        wheel_height = 1
-        
-        #wheel in center position
-        wheel_x, wheel_y, wheel_z, wheel_tilt, connector_direction = calculate_wheel_center_position(body_x, body_y, body_z, body_width, body_height, body_tilt, wheel_width, wheel_height)      
-        wheel1, wheel1_connector_end = create_wheel_box(x=wheel_x, y=wheel_y, z=wheel_z, tilt=wheel_tilt, width=wheel_width, height=wheel_height, line_offset_percent=0.1, connector_direction=connector_direction)
-        self.add(wheel1)
-        
-        # --- SENSOR ---
-        # sensor parameters
-        sensor_radius = 0.1
-        
-        # sensor in center position
-        sensor_x, sensor_y, sensor_z, sensor_anchor_x, sensor_anchor_y, sensor_anchor_z = calculate_sensor_center_position(body_x, body_y, body_z, body_width, body_height, body_tilt, sensor_radius)
-        sensor1, sensor1_connector_end = create_sensor(x=sensor_x, y=sensor_y, z=sensor_z, radius=sensor_radius, body_tilt=body_tilt, sensor_anchor_x=sensor_anchor_x, sensor_anchor_y=sensor_anchor_y, sensor_anchor_z=sensor_anchor_z)
-        self.add(sensor1)
-
-        # --- WIRES ---
-        wire1 = Line(start=wheel1_connector_end, end=sensor1_connector_end, stroke_color=BLACK, stroke_width=4)
-        self.add(wire1)
+        # Draw vehicle at specified position with wheel line offset
+        vehicle = create_vehicle(x=5.25, y=1, z=0, tilt=0.0, line_offset=0.1)
+        self.add(vehicle)
 
 # endregion --- Vehicle ---        
         
