@@ -200,7 +200,7 @@ def create_wheel_box(x, y, z, tilt, width, height, line_offset_percent=0.05, con
     line_spacing = 0.05
     line_offset_start = line_offset_percent * height
     
-    connector_length = 0.2
+    connector_length = 0.3
     
     # Convert wheel position to numpy array
     pos = np.array([x, y, z])
@@ -327,8 +327,17 @@ def create_wheel_box(x, y, z, tilt, width, height, line_offset_percent=0.05, con
         stroke_width=box_stroke_width,
     )
     
-    # Return a group containing the box, interior lines, connector line, plus the connector endpoint
-    return VGroup(wheel_box, *interior_lines, connector_line), connector_end
+    # Create connector label based on direction
+    connector_label = Text("+", color=BLACK, font_size=20)
+    if connector_direction == False:
+        # Left side: label at connector_end x, connector_end y - 0.15, z = 0
+        connector_label.move_to([connector_end[0], connector_end[1] - 0.15, 0])
+    else:
+        # Right side: label at connector_end x, connector_end y, z = 0
+        connector_label.move_to([connector_end[0], connector_end[1], 0])
+    
+    # Return a group containing the box, interior lines, connector line, plus the connector endpoint and label
+    return VGroup(wheel_box, *interior_lines, connector_line, connector_label), connector_end
 
 
 def create_body(x, y, z, width, height, tilt):
@@ -437,7 +446,7 @@ def calculate_sensor_center_position(body_x, body_y, body_z, body_width, body_he
     - Tuple of (sensor_x, sensor_y, sensor_z)
     """
     # Fixed default parameters
-    sensor_distance = 1.5
+    sensor_distance = 2
     
     # Convert body position to numpy array
     pos = np.array([body_x, body_y, body_z])
@@ -560,7 +569,7 @@ def create_vehicle(x, y, z, tilt, line_offset):
     body = create_body(x=x, y=y, z=z, width=body_width, height=body_height, tilt=tilt)
     
     # Fixed wheel dimensions
-    wheel_width = 0.3
+    wheel_width = 0.5
     wheel_height = 1
     
     # Calculate and create wheel
@@ -599,67 +608,56 @@ class BraitenbergV1(MovingCameraScene):
         # --- CAMERA SETTINGS ---
         self.camera.frame.set_width(14)
         self.camera.frame.move_to([6, 6, 0])
-        self.camera.background_color = "#2F9137"
+        self.camera.background_color = "#757575"
         
-        # Create horizontal white lines at various y values with width 2
-        y_values = [0, 2, 4, 6, 8, 10, 12]
-        lines = []
-        labels = []
-        
-        for y in y_values:
-            line = Line(start=np.array([0, y, 0]), end=np.array([12, y, 0]), stroke_color=WHITE, stroke_width=2)
-            lines.append(line)
-            
-            # Create label at middle of line, slightly above
-            label = Text(f"y={y}", font_size=24, color=WHITE)
-            label.move_to([5, y + 0.4, 0])
-            labels.append(label)
-        
-        # Create vertical white lines at various x values with width 2
-        x_values = [0, 2, 4, 6, 8, 10, 12]
-        
-        for x in x_values:
-            line = Line(start=np.array([x, 0, 0]), end=np.array([x, 12, 0]), stroke_color=WHITE, stroke_width=2)
-            lines.append(line)
-            
-            # Create label at 1/3 the length, slightly to the right
-            label = Text(f"x={x}", font_size=24, color=WHITE)
-            label.move_to([x + 0.4, 10/3, 0])
-            labels.append(label)
-        
-        # Display all lines and labels
-        self.play(*[Create(line) for line in lines], *[Create(label) for label in labels])
-
-
 
 # region --- LIGHTBULB ---
-        lightbulb, glow_circles, interval = create_lightbulb(
+        lightbulb_off, glow_circles, interval = create_lightbulb(
             x=6, y=10, z=0,
             center_radius=0.5,
-            center_color="#FFDE05",
+            center_color="#FFFFFF",
             socket_width=0.5,
-            socket_height=0.75,
+            socket_height=0.85,
             num_glow_rings=16,
             max_glow_radius=8,
-            animation_duration=1.5
+            animation_duration=1
         )
-        self.add(lightbulb)
-        
-        # Staggered appearance of glow rings
-        for glow in glow_circles:
-            self.wait(interval)
-            self.add(glow)
-            self.bring_to_front(lightbulb)
-        
-# endregion --- LIGHTBULB ---
-            
+        self.add(lightbulb_off)
+        self.wait(0.5)
+
+# endregion --- LIGHTBULB ---     
+#    
 # region --- Vehicle ---        
 
         # Draw vehicle at specified position with wheel line offset
         vehicle = create_vehicle(x=5.25, y=1, z=0, tilt=0.0, line_offset=0.06)
         self.add(vehicle)
 
-# endregion --- Vehicle ---        
+# endregion --- Vehicle ---   
+
+# region --- TURN ON THE LIGHT ---
+
+        self.remove(lightbulb_off)
+        lightbulb_on, glow_circles, interval = create_lightbulb(
+            x=6, y=10, z=0,
+            center_radius=0.5,
+            center_color="#FFDE05",
+            socket_width=0.5,
+            socket_height=0.85,
+            num_glow_rings=16,
+            max_glow_radius=8,
+            animation_duration=1
+        )
+        self.add(lightbulb_on)
+        self.bring_to_front(vehicle)
+       # Staggered appearance of glow rings
+        for glow in glow_circles:
+            self.wait(interval)
+            self.add(glow)
+            self.bring_to_front(lightbulb_on)
+            self.bring_to_front(vehicle)
+        
+# endregion --- TURN ON THE LIGHT ---
 
 # region --- DRIVE ---
 
