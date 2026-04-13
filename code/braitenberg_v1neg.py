@@ -603,7 +603,7 @@ def create_vehicle(x, y, z, tilt, line_offset):
     return vehicle
 
 
-class BraitenbergV1pos(MovingCameraScene):
+class BraitenbergV1neg(MovingCameraScene):
     def construct(self):
         # --- CAMERA SETTINGS ---
         self.camera.frame.set_width(7)
@@ -629,7 +629,7 @@ class BraitenbergV1pos(MovingCameraScene):
 # region --- Vehicle ---        
 
         # Draw vehicle at specified position with wheel line offset
-        vehicle = create_vehicle(x=5.25, y=1, z=0, tilt=0.0, line_offset=0.02)
+        vehicle = create_vehicle(x=5.25, y=5, z=0, tilt=0.0, line_offset=0.02)
         self.add(vehicle)
         self.wait(1)
 
@@ -661,19 +661,28 @@ class BraitenbergV1pos(MovingCameraScene):
 
 # region --- DRIVE ---
 
-        distance = 4
+        distance = -4  # Negative = downward movement
         duration = 8
-        acceleration_factor = 2.0  # Tuneable parameter: 1.0 = constant speed, 2.0 = quadratic acceleration, higher = more acceleration
+        deceleration_factor = 0.5  # Tuneable parameter: values < 1.0 give deceleration, higher = less deceleration
+        
+        # Use only the smoother part of the deceleration curve to reduce initial jerkiness
+        t_min = 0.2  # Start partway through the curve (smoother region)
+        t_max = 1.0
         
         for f in range(60):
                 self.remove(vehicle)
-                # Calculate normalized time (0 to 1)
-                t_normalized = f / 60.0
-                # Apply acceleration using power function
-                position_factor = t_normalized ** acceleration_factor
-                # New y position with acceleration
-                y_pos = 1 + distance * position_factor
-                vehicle = create_vehicle(x=5.25, y=y_pos, z=0, tilt=0.0, line_offset=(0.02 + (f*0.02)))
+                # Calculate normalized time using the smoother curve region
+                t_normalized = t_min + (t_max - t_min) * (f / 59.0)
+                # Apply deceleration: starting fast, slowing down
+                position_factor = t_normalized ** deceleration_factor
+                # Scale distance to cover full -4 despite using partial curve
+                curve_range = (t_max ** deceleration_factor) - (t_min ** deceleration_factor)
+                scaled_distance = distance / curve_range
+                # Offset so motion starts at y=5 despite curve offset
+                offset = (t_min ** deceleration_factor) * scaled_distance
+                # New y position with deceleration
+                y_pos = 5 + (position_factor * scaled_distance) - offset
+                vehicle = create_vehicle(x=5.25, y=y_pos, z=0, tilt=0.0, line_offset=(0.02 - (f*0.02)))
                 self.add(vehicle)
                 self.wait(duration/120)
 
