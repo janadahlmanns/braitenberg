@@ -197,7 +197,7 @@ def create_wheel_box(x, y, z, tilt, width, height, line_offset_percent=0.05, con
     
     line_stroke_color = "#3A3A3A"  # Darkest gray from CLprompts.txt
     line_stroke_width = 2
-    line_spacing = 0.05
+    line_spacing = 0.1
     line_offset_start = line_offset_percent * height
     
     connector_length = 0.3
@@ -503,7 +503,7 @@ def create_sensor(x, y, z, radius, body_tilt, sensor_anchor_x, sensor_anchor_y, 
     # Fixed default parameters
     sensor_stroke_color = BLACK
     sensor_stroke_width = 4
-    connector_length = 0.2
+    connector_length = 0.1
     
     # Convert positions to numpy arrays
     sensor_pos = np.array([x, y, z])
@@ -603,10 +603,10 @@ def create_vehicle(x, y, z, tilt, line_offset):
     return vehicle
 
 
-class BraitenbergV1(MovingCameraScene):
+class BraitenbergV1pos(MovingCameraScene):
     def construct(self):
         # --- CAMERA SETTINGS ---
-        self.camera.frame.set_width(14)
+        self.camera.frame.set_width(7)
         self.camera.frame.move_to([6, 6, 0])
         self.camera.background_color = "#757575"
         
@@ -623,15 +623,15 @@ class BraitenbergV1(MovingCameraScene):
             animation_duration=1
         )
         self.add(lightbulb_off)
-        self.wait(0.5)
 
 # endregion --- LIGHTBULB ---     
 #    
 # region --- Vehicle ---        
 
         # Draw vehicle at specified position with wheel line offset
-        vehicle = create_vehicle(x=5.25, y=1, z=0, tilt=0.0, line_offset=0.06)
+        vehicle = create_vehicle(x=5.25, y=1, z=0, tilt=0.0, line_offset=0.02)
         self.add(vehicle)
+        self.wait(1)
 
 # endregion --- Vehicle ---   
 
@@ -661,14 +661,22 @@ class BraitenbergV1(MovingCameraScene):
 
 # region --- DRIVE ---
 
-        distance = 2
-        duration = 3
+        distance = 4
+        duration = 8
+        acceleration_factor = 2.0  # Tuneable parameter: 1.0 = constant speed, 2.0 = quadratic acceleration, higher = more acceleration
+        
         for f in range(60):
                 self.remove(vehicle)
-                vehicle = create_vehicle(x=5.25, y=1 + (distance / 120) * f, z=0, tilt=0.0, line_offset=(0.06 + (f*0.01)))
+                # Calculate normalized time (0 to 1)
+                t_normalized = f / 60.0
+                # Apply acceleration using power function
+                position_factor = t_normalized ** acceleration_factor
+                # New y position with acceleration
+                y_pos = 1 + distance * position_factor
+                vehicle = create_vehicle(x=5.25, y=y_pos, z=0, tilt=0.0, line_offset=(0.02 + (f*0.02)))
                 self.add(vehicle)
                 self.wait(duration/120)
 
 # endregion --- DRIVE ---        
         
-        self.wait(3)
+        self.wait(1)
